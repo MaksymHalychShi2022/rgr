@@ -42,7 +42,7 @@ int main() {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-    dwt2d(data, rows, cols, LL, LH, HL, HH);
+    dwt2d(data, LL, LH, HL, HH);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

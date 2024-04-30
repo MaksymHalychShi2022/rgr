@@ -24,40 +24,40 @@ void convolve(const Vector &input, const double *filter, Vector &output) {
     }
 }
 
-void dwt2d(Matrix &data, int rows, int cols, Matrix &LL, Matrix &LH, Matrix &HL, Matrix &HH) {
-    auto temp = Matrix(rows, Vector(cols));
+void dwt2d(Matrix &data, Matrix &LL, Matrix &LH, Matrix &HL, Matrix &HH) {
+    auto temp = Matrix(data.size(), Vector(data[0].size()));
 
-    auto temp_col_low = Vector(cols / 2);
-    auto temp_col_high = Vector(cols / 2);
+    auto temp_col_low = Vector(data[0].size() / 2);
+    auto temp_col_high = Vector(data[0].size() / 2);
 
     // Apply wavelet transform on rows
-    for (int i = 0; i < rows; i++) {
+    for (int i = 0; i < data.size(); i++) {
         convolve(data[i], low_pass, temp_col_low);
         convolve(data[i], high_pass, temp_col_high);
-        for (int j = 0; j < cols / 2; j++) {
+        for (int j = 0; j < data[0].size() / 2; j++) {
             temp[i][j] = temp_col_low[j];
-            temp[i][j + cols / 2] = temp_col_high[j];
+            temp[i][j + data[0].size() / 2] = temp_col_high[j];
         }
     }
 
     // Apply wavelet transform on columns
-    auto temp_row_low = Vector(rows / 2);
-    auto temp_row_high = Vector(rows / 2);
-    auto temp_row = Vector(rows/2);
+    auto temp_row_low = Vector(data.size() / 2);
+    auto temp_row_high = Vector(data.size() / 2);
+    auto temp_row = Vector(data.size());
 
-    for (int j = 0; j < cols; j++) {
-        for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < data[0].size(); j++) {
+        for (int i = 0; i < data.size(); i++) {
             temp_row[i] = temp[i][j];
         }
         convolve(temp_row, low_pass, temp_row_low);
         convolve(temp_row, high_pass, temp_row_high);
-        for (int i = 0; i < rows / 2; i++) {
-            if (j < cols / 2) {
+        for (int i = 0; i < data.size() / 2; i++) {
+            if (j < data[0].size() / 2) {
                 LL[i][j] = temp_row_low[i];
                 HL[i][j] = temp_row_high[i];
             } else {
-                LH[i][j - cols / 2] = temp_row_low[i];
-                HH[i][j - cols / 2] = temp_row_high[i];
+                LH[i][j - data[0].size() / 2] = temp_row_low[i];
+                HH[i][j - data[0].size() / 2] = temp_row_high[i];
             }
         }
     }
