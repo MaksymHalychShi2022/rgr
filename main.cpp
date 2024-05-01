@@ -18,7 +18,7 @@ void print(const Matrix &a) {
     std::cout << "\n";
 }
 
-void test_dwt2d() {
+void test_dwt2d(size_t level = 1) {
     auto input = Matrix(4, Vector(4));
 
     for (int i = 0; i < input.size(); i++) {
@@ -28,13 +28,13 @@ void test_dwt2d() {
     }
 
     print(input);
-    dwt2d(input);
+    dwt2d(input, level);
     print(input);
-    idwt2d(input);
+    idwt2d(input, level);
     print(input);
 }
 
-void test_image() {
+void test_image(size_t level = 1) {
     auto results_dwt = Results();
     auto results_idwt = Results();
     auto NUM_TREADS = {2, 4, 8, 16, 32};
@@ -46,13 +46,13 @@ void test_image() {
 
     Matrix input_copy(input);
     auto start = std::chrono::high_resolution_clock::now();
-    dwt2d(input_copy);
+    dwt2d(input_copy, level);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
     results_dwt.addRecord(rows, cols, 1, duration);
 
     start = std::chrono::high_resolution_clock::now();
-    idwt2d(input_copy);
+    idwt2d(input_copy, level);
     stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
     results_idwt.addRecord(rows, cols, 1, duration);
@@ -61,13 +61,13 @@ void test_image() {
     for (auto ntreads: NUM_TREADS) {
         input_copy = input;
         start = std::chrono::high_resolution_clock::now();
-        dwt2d_parallel(input_copy, ntreads);
+        dwt2d_parallel(input_copy, level, ntreads);
         stop = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         results_dwt.addRecord(rows, cols, ntreads, duration);
 
         start = std::chrono::high_resolution_clock::now();
-        idwt2d_parallel(input_copy, ntreads);
+        idwt2d_parallel(input_copy, level, ntreads);
         stop = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         results_idwt.addRecord(rows, cols, ntreads, duration);
