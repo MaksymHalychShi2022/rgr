@@ -3,82 +3,74 @@
 typedef std::vector<double> Vector;
 typedef std::vector<Vector> Matrix;
 
-// Function to perform the 1D Haar transform on a vector
-Vector dwt1d(const Vector& data) {
-    int n = data.size();
-    Vector transformed(n);
-    int half_n = n / 2;
-
-    for (int i = 0; i < half_n; ++i) {
-        transformed[i] = (data[2 * i] + data[2 * i + 1]) / sqrt(2);   // Average
-        transformed[half_n + i] = (data[2 * i] - data[2 * i + 1]) / sqrt(2); // Difference
+void copy_row(Matrix &m, size_t row_index, size_t row_len, Vector &v) {
+    for (int k = 0; k < row_len; k++) {
+        m[row_index][k] = v[k];
     }
-    return transformed;
+}
+
+void copy_column(Matrix &m, size_t column_index, size_t column_len, Vector &v) {
+    for (int k = 0; k < column_len; k++) {
+        m[k][column_index] = v[k];
+    }
 }
 
 // Function to perform the 2D Haar transform
-Matrix dwt2d(const Matrix& matrix) {
-    auto rows = matrix.size();
-    auto cols = matrix[0].size();
-    Matrix row_transformed(rows, Vector(cols));
+void dwt2d(Matrix &signal) {
+    auto rows = signal.size();
+    auto cols = signal[0].size();
+    auto half_rows = rows / 2;
+    auto half_cols = cols / 2;
+
+    double norm = sqrt(2);
+
+    auto tmp_row = Vector(cols);
+    auto tmp_col = Vector(rows);
 
     // Apply 1D Haar transform to each row
     for (int i = 0; i < rows; ++i) {
-        row_transformed[i] = dwt1d(matrix[i]);
+        for (int j = 0; j < half_cols; j++) {
+            tmp_row[j] = (signal[i][2 * j] + signal[i][2 * j + 1]) / norm;   // Average
+            tmp_row[half_cols + j] = (signal[i][2 * j] - signal[i][2 * j + 1]) / norm; // Difference
+        }
+        copy_row(signal, i, cols, tmp_row);
     }
 
-    Matrix fully_transformed(rows, Vector(cols));
-    // Apply 1D Haar transform to each column of the row-transformed matrix
+    // Apply 1D Haar transform to each column
     for (int j = 0; j < cols; ++j) {
-        Vector column(rows);
-        for (int i = 0; i < rows; ++i) {
-            column[i] = row_transformed[i][j];
+        for (int i = 0; i < half_rows; i++) {
+            tmp_col[i] = (signal[2 * i][j] + signal[2 * i + 1][j]) / norm;   // Average
+            tmp_col[half_rows + i] = (signal[2 * i][j] - signal[2 * i + 1][j]) / norm; // Difference
         }
-        column = dwt1d(column);
-        for (int i = 0; i < rows; ++i) {
-            fully_transformed[i][j] = column[i];
-        }
+        copy_column(signal, j, rows, tmp_col);
     }
-
-    return fully_transformed;
-}
-
-// Function to perform the inverse 1D Haar transform on a vector
-Vector idwt1d(const Vector& transformed) {
-    int n = transformed.size();
-    Vector data(n);
-    int half_n = n / 2;
-
-    for (int i = 0; i < half_n; ++i) {
-        data[2 * i] = (transformed[i] + transformed[half_n + i]) / sqrt(2);   // Reconstruct original even values
-        data[2 * i + 1] = (transformed[i] - transformed[half_n + i]) / sqrt(2); // Reconstruct original odd values
-    }
-    return data;
 }
 
 // Function to perform the inverse 2D Haar transform
-Matrix idwt2d(const Matrix& transformed) {
-    auto rows = transformed.size();
-    auto cols = transformed[0].size();
-    Matrix row_reconstructed(rows, Vector(cols));
+void idwt2d(Matrix &signal) {
+    auto rows = signal.size();
+    auto cols = signal[0].size();
+    auto half_rows = rows / 2;
+    auto half_cols = cols / 2;
+
+    auto tmp_row = Vector(cols);
+    auto tmp_col = Vector(rows);
 
     // Apply inverse 1D Haar transform to each column of the transformed matrix
     for (int j = 0; j < cols; ++j) {
-        Vector column(rows);
-        for (int i = 0; i < rows; ++i) {
-            column[i] = transformed[i][j];
+        for (int i = 0; i < half_rows; i++) {
+            tmp_col[2 * i] = (signal[i][j] + signal[half_rows + i][j]) / sqrt(2);
+            tmp_col[2 * i + 1] = (signal[i][j] - signal[half_rows + i][j]) / sqrt(2);
         }
-        column = idwt1d(column);
-        for (int i = 0; i < rows; ++i) {
-            row_reconstructed[i][j] = column[i];
-        }
+        copy_column(signal, j, rows, tmp_col);
     }
 
-    Matrix fully_reconstructed(rows, Vector(cols));
-    // Apply inverse 1D Haar transform to each row of the row-reconstructed matrix
+    // Apply inverse 1D Haar transform to each rows of the transformed matrix
     for (int i = 0; i < rows; ++i) {
-        fully_reconstructed[i] = idwt1d(row_reconstructed[i]);
+        for (int j = 0; j < half_cols; j++) {
+            tmp_row[2 * j] = (signal[i][j] + signal[i][half_cols + j]) / sqrt(2);
+            tmp_row[2 * j + 1] = (signal[i][j] - signal[i][half_cols + j]) / sqrt(2);
+        }
+        copy_row(signal, i, cols, tmp_row);
     }
-
-    return fully_reconstructed;
 }

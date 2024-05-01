@@ -27,10 +27,10 @@ void test_dwt2d() {
     }
 
     print(input);
-    auto result = dwt2d(input);
-    print(result);
-    auto rec = idwt2d(result);
-    print(rec);
+    dwt2d(input);
+    print(input);
+    idwt2d(input);
+    print(input);
 }
 
 void test_image() {
@@ -38,7 +38,7 @@ void test_image() {
     load_image(input, "../data/atb.jpg");
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto res = dwt2d(input);
+    dwt2d(input);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -47,12 +47,12 @@ void test_image() {
     std::cout << "Time taken by dwt: " << duration.count() / 1e6 << " seconds" << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
-    auto rec = idwt2d(res);
+    idwt2d(input);
     stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Time taken by idwt: " << duration.count() / 1e6 << " seconds" << std::endl;
 
-    save_image(rec, "..input/atb_rec.jpg");
+    save_image(input, "..input/atb_rec.jpg");
 }
 
 int main() {
