@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
-#include <vector>
 
-#include "image.h"
 #include "dwt.h"
+#include "dwt_openMP.h"
+#include "image.h"
+#include "results.h"
 
 
 void print(const Matrix &a) {
@@ -34,28 +35,51 @@ void test_dwt2d() {
 }
 
 void test_image() {
+    auto results_dwt = Results();
+    auto results_idwt = Results();
+    auto NUM_TREADS = {2, 4, 8, 16, 32};
+
     Matrix input;
     load_image(input, "../data/atb.jpg");
+    auto rows = input.size(), cols = input[0].size();
 
+
+    Matrix input_copy(input);
     auto start = std::chrono::high_resolution_clock::now();
-    dwt2d(input);
+    dwt2d(input_copy);
     auto stop = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "rows: " << input.size() << std::endl;
-    std::cout << "cols: " << input[0].size() << std::endl;
-    std::cout << "Time taken by dwt: " << duration.count() / 1e6 << " seconds" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+    results_dwt.addRecord(rows, cols, 1, duration);
 
     start = std::chrono::high_resolution_clock::now();
-    idwt2d(input);
+    idwt2d(input_copy);
     stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by idwt: " << duration.count() / 1e6 << " seconds" << std::endl;
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+    results_idwt.addRecord(rows, cols, 1, duration);
 
-    save_image(input, "..input/atb_rec.jpg");
+
+    for (auto ntreads: NUM_TREADS) {
+        input_copy = input;
+        start = std::chrono::high_resolution_clock::now();
+        dwt2d_parallel(input_copy, ntreads);
+        stop = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+        results_dwt.addRecord(rows, cols, ntreads, duration);
+
+        start = std::chrono::high_resolution_clock::now();
+        idwt2d_parallel(input_copy, ntreads);
+        stop = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+        results_idwt.addRecord(rows, cols, ntreads, duration);
+    }
+
+    results_dwt.writeToCSV("../dwt_results.csv");
+    results_idwt.writeToCSV("../idwt_results.csv");
+
+//    save_image(input, "..input/atb_rec.jpg");
 }
 
 int main() {
-//    test_image();
-    test_dwt2d();
+    test_image();
+//    test_dwt2d();
 }
