@@ -2,63 +2,60 @@
 #include <vector>
 #include <chrono>
 #include <vector>
-#include <opencv2/opencv.hpp>
+
+#include "image.h"
 #include "dwt.h"
-#include "idwt.h"
 
-typedef std::vector<double> Vector;
-typedef std::vector<Vector> Matrix;
 
-int main() {
-    cv::Mat image = cv::imread("../data/atb.jpg");
-    if (image.empty()) {
-        std::cout << "Could not read the image" << std::endl;
-        return 1;
+void print(const Matrix &a) {
+    for (auto &row: a) {
+        for (auto el: row) {
+            std::cout << el << "\t";
+        }
+        std::cout << "\n";
     }
+    std::cout << "\n";
+}
 
-    cv::Mat gray;
-    if (image.channels() > 1) {
-        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
-    }
-    else {
-        gray = image;  // If the image is already in grayscale
-    }
+void test_dwt2d() {
+    auto input = Matrix(4, Vector(4));
 
-    int rows = gray.rows;
-    int cols = gray.cols;
-
-    // Allocate memory for the double matrix
-    Matrix data(rows, Vector(cols));
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            data[i][j] = static_cast<double>(gray.at<uint8_t>(i, j));
+    for (int i = 0; i < input.size(); i++) {
+        for (int j = 0; j < input[0].size(); j++) {
+            input[i][j] = i * input[0].size() + j;
         }
     }
 
-    auto LL = Matrix(rows / 2, Vector(cols / 2));
-    auto LH = Matrix(rows / 2, Vector(cols / 2));
-    auto HL = Matrix(rows / 2, Vector(cols / 2));
-    auto HH = Matrix(rows / 2, Vector(cols / 2));
+    print(input);
+    auto result = dwt2d(input);
+    print(result);
+    auto rec = idwt2d(result);
+    print(rec);
+}
 
+void test_image() {
+    Matrix input;
+    load_image(input, "../data/atb.jpg");
 
     auto start = std::chrono::high_resolution_clock::now();
-    dwt2d(data, LL, LH, HL, HH);
+    auto res = dwt2d(input);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    //    std::cout << "rows: " << rows << std::endl;
-    //    std::cout << "cols: " << cols << std::endl;
-    //    std::cout << "Time taken by function: " << duration.count()/1e6 << " seconds" << std::endl;
+    std::cout << "rows: " << input.size() << std::endl;
+    std::cout << "cols: " << input[0].size() << std::endl;
+    std::cout << "Time taken by dwt: " << duration.count() / 1e6 << " seconds" << std::endl;
 
+    start = std::chrono::high_resolution_clock::now();
+    auto rec = idwt2d(res);
+    stop = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Time taken by idwt: " << duration.count() / 1e6 << " seconds" << std::endl;
 
-//    idwt2d(LL, LH, HL, HH, rows, cols, data);
+    save_image(rec, "..input/atb_rec.jpg");
+}
 
-    // Convert data back to cv::Mat
-    cv::Mat reconstructed(gray.size(), CV_8UC1);
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            reconstructed.at<uint8_t>(i, j) = static_cast<uint8_t>(data[i][j]);
-        }
-    }
-    cv::imwrite("../data/atb_rec.jpg", reconstructed);
+int main() {
+//    test_image();
+    test_dwt2d();
 }

@@ -1,66 +1,84 @@
-#include <vector>
-
+#include <cmath> // For floor function
 
 typedef std::vector<double> Vector;
 typedef std::vector<Vector> Matrix;
 
-// Daubechies db2 filters
-double low_pass[] = {0.4829629131445341, 0.8365163037378079, 0.2241438680420134, -0.1294095225512604};
-double high_pass[] = {-0.1294095225512604, -0.2241438680420134, 0.8365163037378079, -0.4829629131445341};
-int filter_length = 4;
-int NUM_TREADS = 4;
+// Function to perform the 1D Haar transform on a vector
+Vector dwt1d(const Vector& data) {
+    int n = data.size();
+    Vector transformed(n);
+    int half_n = n / 2;
 
-// Function to perform one-dimensional convolution with downsampling
-void convolve(const Vector &input, const double *filter, Vector &output) {
-    int count = 0;
-    for (int i = 0; i < input.size(); i += 2) {
-        output[count] = 0;
-        for (int j = 0; j < filter_length; j++) {
-            if ((i - j) >= 0 && (i - j) < input.size()) {
-                output[count] += input[i - j] * filter[j];
-            }
-        }
-        count++;
+    for (int i = 0; i < half_n; ++i) {
+        transformed[i] = (data[2 * i] + data[2 * i + 1]) / sqrt(2);   // Average
+        transformed[half_n + i] = (data[2 * i] - data[2 * i + 1]) / sqrt(2); // Difference
     }
+    return transformed;
 }
 
-void dwt2d(Matrix &data, Matrix &LL, Matrix &LH, Matrix &HL, Matrix &HH) {
-    auto temp = Matrix(data.size(), Vector(data[0].size()));
+// Function to perform the 2D Haar transform
+Matrix dwt2d(const Matrix& matrix) {
+    auto rows = matrix.size();
+    auto cols = matrix[0].size();
+    Matrix row_transformed(rows, Vector(cols));
 
-    auto temp_col_low = Vector(data[0].size() / 2);
-    auto temp_col_high = Vector(data[0].size() / 2);
+    // Apply 1D Haar transform to each row
+    for (int i = 0; i < rows; ++i) {
+        row_transformed[i] = dwt1d(matrix[i]);
+    }
 
-    // Apply wavelet transform on rows
-    for (int i = 0; i < data.size(); i++) {
-        convolve(data[i], low_pass, temp_col_low);
-        convolve(data[i], high_pass, temp_col_high);
-        for (int j = 0; j < data[0].size() / 2; j++) {
-            temp[i][j] = temp_col_low[j];
-            temp[i][j + data[0].size() / 2] = temp_col_high[j];
+    Matrix fully_transformed(rows, Vector(cols));
+    // Apply 1D Haar transform to each column of the row-transformed matrix
+    for (int j = 0; j < cols; ++j) {
+        Vector column(rows);
+        for (int i = 0; i < rows; ++i) {
+            column[i] = row_transformed[i][j];
+        }
+        column = dwt1d(column);
+        for (int i = 0; i < rows; ++i) {
+            fully_transformed[i][j] = column[i];
         }
     }
 
-    // Apply wavelet transform on columns
-    auto temp_row_low = Vector(data.size() / 2);
-    auto temp_row_high = Vector(data.size() / 2);
-    auto temp_row = Vector(data.size());
-
-    for (int j = 0; j < data[0].size(); j++) {
-        for (int i = 0; i < data.size(); i++) {
-            temp_row[i] = temp[i][j];
-        }
-        convolve(temp_row, low_pass, temp_row_low);
-        convolve(temp_row, high_pass, temp_row_high);
-        for (int i = 0; i < data.size() / 2; i++) {
-            if (j < data[0].size() / 2) {
-                LL[i][j] = temp_row_low[i];
-                HL[i][j] = temp_row_high[i];
-            } else {
-                LH[i][j - data[0].size() / 2] = temp_row_low[i];
-                HH[i][j - data[0].size() / 2] = temp_row_high[i];
-            }
-        }
-    }
+    return fully_transformed;
 }
 
+// Function to perform the inverse 1D Haar transform on a vector
+Vector idwt1d(const Vector& transformed) {
+    int n = transformed.size();
+    Vector data(n);
+    int half_n = n / 2;
 
+    for (int i = 0; i < half_n; ++i) {
+        data[2 * i] = (transformed[i] + transformed[half_n + i]) / sqrt(2);   // Reconstruct original even values
+        data[2 * i + 1] = (transformed[i] - transformed[half_n + i]) / sqrt(2); // Reconstruct original odd values
+    }
+    return data;
+}
+
+// Function to perform the inverse 2D Haar transform
+Matrix idwt2d(const Matrix& transformed) {
+    auto rows = transformed.size();
+    auto cols = transformed[0].size();
+    Matrix row_reconstructed(rows, Vector(cols));
+
+    // Apply inverse 1D Haar transform to each column of the transformed matrix
+    for (int j = 0; j < cols; ++j) {
+        Vector column(rows);
+        for (int i = 0; i < rows; ++i) {
+            column[i] = transformed[i][j];
+        }
+        column = idwt1d(column);
+        for (int i = 0; i < rows; ++i) {
+            row_reconstructed[i][j] = column[i];
+        }
+    }
+
+    Matrix fully_reconstructed(rows, Vector(cols));
+    // Apply inverse 1D Haar transform to each row of the row-reconstructed matrix
+    for (int i = 0; i < rows; ++i) {
+        fully_reconstructed[i] = idwt1d(row_reconstructed[i]);
+    }
+
+    return fully_reconstructed;
+}
