@@ -29,14 +29,12 @@ void test_dwt2d(size_t level = 1) {
     print(input);
     dwt2d(input, level);
     print(input);
-    idwt2d(input, level);
-    print(input);
 }
 
 void test_image(std::vector<std::string> &images, size_t level = 1) {
     auto results_dwt = Results();
     auto results_idwt = Results();
-    auto NUM_TREADS = {1, 2, 4, 8, 16, 32, 62};
+    auto NUM_TREADS = {1, 2, 4, 8, 16, 32, 64};
 
     Matrix input;
 
@@ -56,31 +54,18 @@ void test_image(std::vector<std::string> &images, size_t level = 1) {
             stop = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
             results_dwt.addRecord(rows, cols, ntreads, duration);
-
-            start = std::chrono::high_resolution_clock::now();
-            idwt2d(input_copy, level, ntreads);
-            stop = std::chrono::high_resolution_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
-            results_idwt.addRecord(rows, cols, ntreads, duration);
         }
 
     }
 
     results_dwt.writeToCSV("../dwt_results.csv");
-    results_idwt.writeToCSV("../idwt_results.csv");
-
-//    dwt2d(input, level);
-//    normalize(input, level);
-//    save_image(input, "../data/tr.jpg");
-//    idwt2d(input, level);
-//    save_image(input, "../data/rec.jpg");
 }
 
 int main() {
     std::vector<std::string> images = {
-            "../data/atb.jpg",
+            "../data/test_small.tsv",
     };
 
-    test_image(images, 3);
-//    test_dwt2d();
+    test_image(images, 1);
+//    test_dwt2d(1);
 }

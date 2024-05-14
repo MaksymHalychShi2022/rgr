@@ -1,5 +1,6 @@
-#include <opencv2/opencv.hpp>
 #include <csignal>
+#include <fstream>
+#include <sstream>
 
 
 typedef std::vector<double> Vector;
@@ -51,40 +52,36 @@ void normalize(Matrix &data, size_t levels) {
             data[i][j] = std::abs(data[i][j]) * norm;
         }
     }
-
 }
 
 void load_image(Matrix &data, const std::string &path) {
-    cv::Mat image = cv::imread(path);
-    if (image.empty()) {
-        std::cout << "Could not read the image" << std::endl;
+    std::ifstream file(path);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file.\n";
         _exit(1);
     }
 
-    cv::Mat gray;
-    if (image.channels() > 1) {
-        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
-    } else {
-        gray = image;  // If the image is already in grayscale
-    }
-    int rows = gray.rows;
-    int cols = gray.cols;
+    std::string line;
+    size_t rows, cols;
 
-    // Allocate memory for the double matrix
+    // Read the first line to get dimensions
+    if (getline(file, line)) {
+        std::istringstream iss(line);
+        iss >> rows >> cols;
+    }
+
     data.resize(rows, Vector(cols));
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            data[i][j] = static_cast<double>(gray.at<uint8_t>(i, j));
+//    std::vector<std::vector<float>> matrix(rows, std::vector<float>(cols));
+
+    // Read the matrix data
+    for (int row = 0; getline(file, line); row++) {
+        std::istringstream iss(line);
+        for (int col = 0; col < cols; ++col) {
+            iss >> data[row][col];
         }
     }
+
+    file.close();
 }
 
-void save_image(Matrix &data, const std::string &path) {
-    cv::Mat reconstructed(data.size(), data[0].size(), CV_8UC1);
-    for (int i = 0; i < data.size(); ++i) {
-        for (int j = 0; j < data[0].size(); ++j) {
-            reconstructed.at<uint8_t>(i, j) = static_cast<uint8_t>(data[i][j]);
-        }
-    }
-    cv::imwrite("../data/atb_rec.jpg", reconstructed);
-}
