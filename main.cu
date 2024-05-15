@@ -91,7 +91,7 @@ void test_gpu_time(std::vector <std::string> test_set) {
         delete[] host_signal;
     }
 
-    results_dwt.writeToCSV("../dwt_results.csv");
+    results_dwt.writeToCSV("../time_gpu_results.csv");
 }
 
 void test_gpu_certainty(const std::string &output) {

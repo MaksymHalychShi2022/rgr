@@ -51,7 +51,7 @@ void test_cpu_time(std::vector<std::string> &images, size_t level = 1) {
         }
     }
 
-    results_dwt.writeToCSV("../data/dwt_results.csv");
+    results_dwt.writeToCSV("../data/time_cpu_results.csv");
 }
 
 void test_cpu_certainty(const std::string &output) {
