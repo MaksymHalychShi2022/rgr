@@ -28,6 +28,18 @@ public:
         }
     }
 
+    void addRecord(size_t rows, size_t cols, const std::string &ntreads, size_t time, bool logging = true) {
+        results.push_back({std::to_string(rows) + "x" + std::to_string(cols),
+                           ntreads,
+                           std::to_string(time)
+                          });
+        if (logging) {
+            std::cout << results[results.size() - 1].size << ",";
+            std::cout << results[results.size() - 1].ntreads << ",";
+            std::cout << results[results.size() - 1].time << "\n";
+        }
+    }
+
     void writeToCSV(const char *fileName) {
         std::ofstream outFile(fileName);
         if (outFile.is_open()) {

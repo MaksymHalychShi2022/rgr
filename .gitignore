@@ -1,5 +1,5 @@
 cmake-build-debug/
 .idea/
-data/atb_rec.jpg
+data/
 dwt_results.csv
 idwt_results.csv

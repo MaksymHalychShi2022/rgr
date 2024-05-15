@@ -54,7 +54,10 @@ void normalize(Matrix &data, size_t levels) {
     }
 }
 
-void load_image(Matrix &data, const std::string &path) {
+void load_image(
+        Matrix &data,
+        const std::string &path
+) {
     std::ifstream file(path);
 
     if (!file.is_open()) {
@@ -85,3 +88,93 @@ void load_image(Matrix &data, const std::string &path) {
     file.close();
 }
 
+void load_image(
+        float *&signal,
+        int &rows,
+        int &cols,
+        const std::string &path
+) {
+    std::ifstream file(path);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file.\n";
+        _exit(1);
+    }
+
+    std::string line;
+
+    // Read the first line to get dimensions
+    if (getline(file, line)) {
+        std::istringstream iss(line);
+        iss >> rows >> cols;
+    }
+
+    signal = new float[rows * cols];
+
+    // Read the matrix data
+    for (int i = 0; getline(file, line); i++) {
+        std::istringstream iss(line);
+        for (int j = 0; j < cols; ++j) {
+            iss >> signal[i * cols + j];
+        }
+    }
+
+    file.close();
+}
+
+void write_image(
+        Matrix &data,
+        const std::string &path
+) {
+    auto rows = data.size(), cols = data[0].size();
+    std::ofstream file(path);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file.\n";
+        _exit(1);
+    }
+
+    file << rows << "\t" << cols << "\n";
+
+    // Writing the matrix to the file
+    for (auto i = 0; i < rows; i++) {
+        for (auto j = 0; j < cols; j++) {
+            if (j != 0) {
+                file << '\t';  // Add a tab before every number except the first in a row
+            }
+            file << data[i][j];
+        }
+        file << '\n';  // End each row with a newline
+    }
+
+    file.close();
+}
+
+void write_image(
+        float *signal,
+        int rows,
+        int cols,
+        const std::string &path
+) {
+    std::ofstream file(path);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file.\n";
+        _exit(1);
+    }
+
+    file << rows << "\t" << cols << "\n";
+
+    // Writing the matrix to the file
+    for (auto i = 0; i < rows; i++) {
+        for (auto j = 0; j < cols; j++) {
+            if (j != 0) {
+                file << '\t';  // Add a tab before every number except the first in a row
+            }
+            file << signal[i * cols + j];
+        }
+        file << '\n';  // End each row with a newline
+    }
+
+    file.close();
+}
