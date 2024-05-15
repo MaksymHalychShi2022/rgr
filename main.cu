@@ -72,7 +72,7 @@ void dwt2d(
 }
 
 
-void test_gpu_time(std::vector<std::string> test_set) {
+void test_gpu_time(std::vector <std::string> test_set) {
     auto results_dwt = Results();
     std::chrono::high_resolution_clock::time_point start;
     std::chrono::high_resolution_clock::time_point stop;
@@ -94,10 +94,12 @@ void test_gpu_time(std::vector<std::string> test_set) {
     results_dwt.writeToCSV("../dwt_results.csv");
 }
 
-void test_gpu_certainty(const std::string &input, const std::string &output) {
-    int rows, cols;
-    float *host_signal;
-    load_image(host_signal, rows, cols, input);
+void test_gpu_certainty(const std::string &output) {
+    int rows = 8, cols = 8;
+    float *host_signal = new float[rows * cols];
+    for (auto i = 0; i < rows * cols; i++) {
+        host_signal[i] = i;
+    }
 
     dwt2d(host_signal, rows, cols);
     write_image(host_signal, rows, cols, output);
@@ -105,14 +107,14 @@ void test_gpu_certainty(const std::string &input, const std::string &output) {
 }
 
 int main() {
-    std::vector<std::string> test_set = {
+    std::vector <std::string> test_set = {
             "../data/test_big.tsv",
             "../data/test_medium.tsv",
             "../data/test_small.tsv",
     };
 
     test_gpu_time(test_set);
-    test_gpu_certainty("../data/test_small.tsv", "../data/test_small_gpu_output.tsv");
+    test_gpu_certainty("../data/test_certainty_gpu_output.tsv");
 
     return 0;
 }

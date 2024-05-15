@@ -6,18 +6,7 @@
 #include "image.h"
 #include "results.h"
 
-
-void test_dwt2d(size_t level = 1) {
-    auto input = Matrix(4, Vector(4));
-
-    for (int i = 0; i < input.size(); i++) {
-        for (int j = 0; j < input[0].size(); j++) {
-            input[i][j] = i * input[0].size() + j + 1;
-        }
-    }
-
-    dwt2d(input, level);
-
+void print(Matrix &input){
     for (auto &row: input) {
         for (auto el: row) {
             std::cout << el << "\t";
@@ -25,6 +14,19 @@ void test_dwt2d(size_t level = 1) {
         std::cout << "\n";
     }
     std::cout << "\n";
+}
+
+void test_dwt2d(size_t level = 1) {
+    auto input = Matrix(4, Vector(4));
+
+    for (auto i = 0; i < input.size(); i++) {
+        for (auto j = 0; j < input[0].size(); j++) {
+            input[i][j] = i * input[0].size() + j + 1;
+        }
+    }
+
+    dwt2d(input, level);
+    print(input);
 }
 
 void test_cpu_time(std::vector<std::string> &images, size_t level = 1) {
@@ -52,13 +54,16 @@ void test_cpu_time(std::vector<std::string> &images, size_t level = 1) {
     results_dwt.writeToCSV("../data/dwt_results.csv");
 }
 
-void test_cpu_certainty(const std::string &input, const std::string &output) {
-    Matrix data;
-    load_image(data, input);
-
+void test_cpu_certainty(const std::string &output) {
+    auto rows = 8, cols = 8;
+    Matrix data(rows, Vector(cols));
+    for (auto i = 0; i < rows; i++) {
+        for (auto j = 0; j < cols; j++) {
+            data[i][j] = i * cols + j;
+        }
+    }
     dwt2d(data, 1, 4);
-    write_image(data, output);
-}
+    write_image(data, output);}
 
 int main() {
     std::vector<std::string> images = {
@@ -67,7 +72,7 @@ int main() {
             "../data/test_small.tsv",
     };
 
-    test_cpu_time(images, 1);
-    test_cpu_certainty("../data/test_small.tsv", "../data/test_small_cpu_output.tsv");
+//    test_cpu_time(images, 1);
+    test_cpu_certainty("../data/test_certainty_cpu_output.tsv");
 //    test_dwt2d(1);
 }
